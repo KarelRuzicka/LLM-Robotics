@@ -29,5 +29,15 @@ def main():
 
     print("Goodbye!")
 
+
+@agent.agent.tool_plain
+def inform_user(message: str) -> None:
+    """
+    Inform the user of what is going to happen before executing a robot action.
+    """
+    print(message)
+
+
+
 if __name__ == "__main__":
     main()

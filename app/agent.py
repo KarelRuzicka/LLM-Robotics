@@ -37,12 +37,3 @@ agent = Agent(
     ),
     toolsets=[general_toolset, robot_toolset],
 )
-
-
-@agent.tool_plain
-def inform_user(message: str) -> None:
-    """
-    Inform the user of what is going to happen before executing a robot action.
-    """
-    print(message)
-    
