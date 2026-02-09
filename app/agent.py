@@ -4,17 +4,14 @@ from pydantic_ai.exceptions import ModelRetry
 from config import settings as conf
 import importlib
 
-from class_tools import methods_as_tools, class_doc, class_name
 from general_toolset import toolset as general_toolset
 
 
 # Dynamically import the robot specified in the configuration
 robot_module = importlib.import_module(conf.ROBOT_MODULE)
-ROBOT_INSTANCE = getattr(robot_module, conf.ROBOT_CLASS)()
-    
+robot_toolset = getattr(robot_module, conf.ROBOT_TOOLSET)
 
-
-robot_toolset = FunctionToolset(tools=methods_as_tools(ROBOT_INSTANCE))
+robot_description = robot_toolset.metadata.get("robot_description", None)    
 
 agent = Agent(  
     conf.MODEL,
@@ -22,7 +19,7 @@ agent = Agent(
     output_type=str,
     system_prompt=(
         'You are the brain of a robot.'
-        f'Robot description: {class_doc(ROBOT_INSTANCE)}'
+        f"Robot description: {robot_description}." if robot_description else ""
         'Get an instruction from the user and execute it.'
         'Instructions can either be robot commands or general questions.'
         'Use available tools to perform your given task.'
