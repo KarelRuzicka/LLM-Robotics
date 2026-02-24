@@ -25,6 +25,9 @@ def _wrap_to_pi(angle_rad: float) -> float:
     """Wrap angle to [-pi, pi]."""
     return (angle_rad + math.pi) % (2.0 * math.pi) - math.pi
 
+def wrap_to_180(angle_deg: float) -> float:
+    """Wrap angle to [-180, 180] degrees."""
+    return (angle_deg + 180.0) % 360.0 - 180.0
 
 ############################################################
 # Robot Controller
@@ -54,7 +57,7 @@ class RobotController:
         self._lowstate_sub.Init(self._on_lowstate, 32)
 
         self._default_height = float(default_height)
-        self.tolerance_deg = 2.0
+        self.tolerance_deg = 5.0
         
         self._period = 1.0 / rate_hz if rate_hz > 0 else 0.01
 
@@ -132,36 +135,40 @@ class RobotController:
         height: Optional[float] = None,
     ) -> None:
         """Rotate in place by a relative angle in degrees in range <-180, +180> where positive values correspond to counter-clockwise (left) rotation."""
-        start = self.get_yaw_rad()
-        if start is None:
-            raise RuntimeError("Yaw not available yet.")
-
-        # 20 second per 90 degrees of 1.5 speed
-        timeout_s = 20 * (abs(degrees) / 90.0) * (1.5 / abs(yaw_speed))
         
+        if degrees > 180.0 or degrees < -180.0:
+            raise ValueError("Rotation degrees must be in range <-180, +180>.")
+        
+        if height is None:
+            height = self._default_height
 
-        # Sign convention: positive degrees should rotate in the same direction
-        # you expect when giving a positive yaw_speed to rotate_right().
-        target = _wrap_to_pi(start + math.radians(float(degrees)))
-        tol = math.radians(float(self.tolerance_deg))
+        # Try to get current yaw in degrees
+        current = self.get_yaw_deg()
+        
+        if current is None:
+            raise RuntimeError("Current yaw is not available yet.")
+        
+        target = wrap_to_180(current + degrees)
 
-        # Choose a fixed-direction yaw rate based on sign of requested degrees.
-        cmd_rate = -abs(float(yaw_speed)) if degrees > 0 else abs(float(yaw_speed))
+        # Initial direction based on desired delta
+        cmd = (abs(yaw_speed) if degrees < 0.0 else -abs(yaw_speed))
 
-        t0 = time.time()
-        while (time.time() - t0) < float(timeout_s):
-            yaw = self.get_yaw_rad()
-            if yaw is None:
-                break
-            err = _wrap_to_pi(target - yaw)
-            if abs(err) <= tol:
-                self.stop(height=height)
-                return
-            self.send_command(x_vel=0.0, y_vel=0.0, yaw_vel=cmd_rate, height=height)
+        while True:
+            current = self.get_yaw_deg()
+
+            if current is not None:
+                error = wrap_to_180(target - current)  # degrees
+                # Stop if within tolerance
+                if abs(error) <= self.tolerance_deg:
+                    break
+                if (current > target and degrees > 0.0) or (current < target and degrees < 0.0):
+                    break
+
+            # Command yaw rate, keep x/y zero
+            self.send_command(x_vel=0.0, y_vel=0.0, yaw_vel=cmd, height=height)
             time.sleep(self._period)
 
         self.stop(height=height)
-        raise RuntimeError("rotate_by_degrees() timed out before reaching target.")
 
 
 ############################################################
@@ -226,7 +233,10 @@ toolset.metadata["robot_description"] = "Unitree G1 robot. Supports basic moveme
    
    
 def walk(direction: Literal["forward", "backward", "left", "right"], duration_sec: float) -> None:
-    """Walk the robot in the specified direction for a given duration and speed."""
+    """
+    Walk the robot in the specified direction for a given duration and speed.
+    4 seconds of walking roughly equates to 1 meter.
+    """
     
     speed = 1
     print(f"[UnitreeRobot] Walking {direction} for {duration_sec} seconds at speed {speed}")
@@ -274,6 +284,8 @@ def rotate(angle: float) -> None:
     except Exception as e:
         print(f"[UnitreeRobot] Error while rotating: {e}")
         raise ModelRetry(f"Error while rotating: {e}")
+    
+    time.sleep(1) # Let the rotation settle
         
 
         
@@ -292,6 +304,7 @@ def get_rotation() -> float:
         
 def get_camera_snapshot() -> BinaryContent:
     """Get a snapshot from the head camera."""
+    print(f"[UnitreeRobot] Getting camera snapshot...")
     try:
         deadline = time.monotonic() + 5.0
         last_fps = 0.0
@@ -332,18 +345,18 @@ if __name__ == "__main__":
 
     time.sleep(2)
     
-    walk("forward", 2)
+    # walk("backward", 2)
     
-    time.sleep(2)
+    # time.sleep(2)
     
     print(f"Rotation: {get_rotation()}")
-    rotate(90)
+    rotate(20)
     print(f"Rotation: {get_rotation()}")
     
-    content = get_camera_snapshot()
+    # content = get_camera_snapshot()
 
-    out_path = f"camera_snapshot.png"
+    # out_path = f"camera_snapshot.png"
 
-    with open(out_path, "wb") as f:
-        f.write(content.data)
+    # with open(out_path, "wb") as f:
+    #     f.write(content.data)
     
