@@ -1,4 +1,8 @@
 import agent
+# import logfire
+
+# logfire.configure()
+# logfire.instrument_pydantic_ai()
 
 
 def main():    
@@ -10,7 +14,7 @@ def main():
     messages = None
     while True:
         try:
-            user_input = input("> ").strip()
+            user_input = input("USER: ").strip()
         except (EOFError, KeyboardInterrupt): # Handle Ctrl+C or EOF
             print()
             break
@@ -22,7 +26,7 @@ def main():
 
         try:
             result = agent.agent.run_sync(user_input, message_history=messages) # Run agent with the user input and the conversation history
-            print(result.output) # Print the agent's response
+            print(f"AGENT: {result.output}") # Print the agent's response
             messages = result.all_messages() # Keep the conversation history
         except Exception as e:
             print(f"Error: {e}")
@@ -35,7 +39,7 @@ def inform_user(message: str) -> None:
     """
     Inform the user of what is going to happen before executing a robot action.
     """
-    print(message)
+    print(f"AGENT: {message}")
 
 
 

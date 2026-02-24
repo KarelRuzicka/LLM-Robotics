@@ -14,6 +14,7 @@ toolset.add_tool(duckduckgo_search_tool())
 async def get_date_and_time(ctx: RunContext, question: str) -> str:
     """Provides the current date and time."""
     now = datetime.now()
+    print(f"[ACTION] Retrieving current date and time...")
     return f"The current date and time is: {now.strftime('%Y-%m-%d %H:%M:%S')}"
 
 @toolset.tool
@@ -25,6 +26,7 @@ async def get_current_location(ctx: RunContext) -> str:
         with urllib.request.urlopen("https://ipinfo.io/json", timeout=5) as resp:
             return json.load(resp)
 
+    print(f"[ACTION] Retrieving current location...")
     try:
         data = await asyncio.to_thread(fetch)
 
