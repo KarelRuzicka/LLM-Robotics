@@ -40,7 +40,7 @@ class RobotController:
         domain_id: int = 1,
         topic: str = "rt/run_command/cmd",
         lowstate_topic: str = "rt/lowstate",
-        default_height: float = 0.8,
+        default_height: float = -0.5,
         rate_hz: float = 100.0,
     ) -> None:
         # HighState DDS publisher for movement commands
@@ -57,7 +57,7 @@ class RobotController:
         self._lowstate_sub.Init(self._on_lowstate, 32)
 
         self._default_height = float(default_height)
-        self.tolerance_deg = 5.0
+        self.tolerance_deg = 0.85
         
         self._period = 1.0 / rate_hz if rate_hz > 0 else 0.01
 
@@ -131,7 +131,7 @@ class RobotController:
     def rotate(
         self,
         degrees: float,
-        yaw_speed: float = 1.5,
+        yaw_speed: float = 2.0,
         height: Optional[float] = None,
     ) -> None:
         """Rotate in place by a relative angle in degrees in range <-180, +180> where positive values correspond to counter-clockwise (left) rotation."""
@@ -149,6 +149,8 @@ class RobotController:
             raise RuntimeError("Current yaw is not available yet.")
         
         target = wrap_to_180(current + degrees)
+        
+        desired_sign = 1.0 if degrees > 0.0 else -1.0
 
         # Initial direction based on desired delta
         cmd = (abs(yaw_speed) if degrees < 0.0 else -abs(yaw_speed))
@@ -160,8 +162,12 @@ class RobotController:
                 error = wrap_to_180(target - current)  # degrees
                 # Stop if within tolerance
                 if abs(error) <= self.tolerance_deg:
+                    print("Primary stop triggered")
                     break
-                if (current > target and degrees > 0.0) or (current < target and degrees < 0.0):
+                print(f"Current: {current:.2f}°, Target: {target:.2f}°, Error: {error:.2f}°")
+                # Fallback if we overshoot
+                if (error * desired_sign) < 0.0:
+                    print("Fallback stop triggered")
                     break
 
             # Command yaw rate, keep x/y zero
@@ -345,13 +351,13 @@ if __name__ == "__main__":
 
     time.sleep(2)
     
-    # walk("backward", 2)
+    walk("backward", 2)
+    time.sleep(2)
     
-    # time.sleep(2)
-    
-    print(f"Rotation: {get_rotation()}")
-    rotate(20)
-    print(f"Rotation: {get_rotation()}")
+    last_rotation = get_rotation()
+    rotate(90)
+    print(f"Rotated by {wrap_to_180(get_rotation() - last_rotation)} degrees")
+
     
     # content = get_camera_snapshot()
 

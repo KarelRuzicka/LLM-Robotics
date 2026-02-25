@@ -17,6 +17,9 @@ agent = Agent(
     conf.MODEL,
     # deps_type=RobotInstance,
     output_type=str,
+    model_settings=ModelSettings(
+        parallel_tool_calls=False,
+    ),
     system_prompt=(
         'You are the brain of a robot.'
         f'{"Robot description: " + robot_description if robot_description else ""}'
