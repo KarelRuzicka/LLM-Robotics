@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
 
@@ -7,8 +7,7 @@ class Settings(BaseSettings):
     ROBOT_TOOLSET: str = "toolset"
     MODEL: str = Field(init=False)
 
-    class Config:
-        env_file = ".config"
+    model_config = SettingsConfigDict(env_file=".config")
 
 
 settings = Settings()
