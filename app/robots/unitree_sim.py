@@ -162,12 +162,12 @@ class RobotController:
                 error = wrap_to_180(target - current)  # degrees
                 # Stop if within tolerance
                 if abs(error) <= self.tolerance_deg:
-                    print("Primary stop triggered")
+                    # print("Primary stop triggered")
                     break
-                print(f"Current: {current:.2f}°, Target: {target:.2f}°, Error: {error:.2f}°")
+                # print(f"Current: {current:.2f}°, Target: {target:.2f}°, Error: {error:.2f}°")
                 # Fallback if we overshoot
                 if (error * desired_sign) < 0.0:
-                    print("Fallback stop triggered")
+                    # print("Fallback stop triggered")
                     break
 
             # Command yaw rate, keep x/y zero
@@ -359,10 +359,10 @@ if __name__ == "__main__":
     print(f"Rotated by {wrap_to_180(get_rotation() - last_rotation)} degrees")
 
     
-    # content = get_camera_snapshot()
+    content = get_camera_snapshot()
 
-    # out_path = f"camera_snapshot.png"
+    out_path = f"camera_snapshot.png"
 
-    # with open(out_path, "wb") as f:
-    #     f.write(content.data)
+    with open(out_path, "wb") as f:
+        f.write(content.data)
     
