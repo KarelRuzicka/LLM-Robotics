@@ -240,12 +240,12 @@ toolset.metadata["robot_description"] = "Unitree G1 robot. Supports basic moveme
    
 def walk(direction: Literal["forward", "backward", "left", "right"], duration_sec: float) -> None:
     """
-    Walk the robot in the specified direction for a given duration and speed.
+    Walk the robot in the specified direction for a given duration.
     4 seconds of walking roughly equates to 1 meter.
     """
     
     speed = 1
-    print(f"[UnitreeRobot] Walking {direction} for {duration_sec} seconds at speed {speed}")
+    print(f"[UnitreeRobot] Walking {direction} for {duration_sec} seconds")
     
     try:
         match direction:
@@ -283,7 +283,7 @@ def rotate(angle: float) -> None:
     """Rotate the robot in place by a relative angle in degrees in range <-180, +180> where positive values correspond to counter-clockwise (left) rotation."""
     
     speed = 1.5
-    print(f"[UnitreeRobot] Rotating {angle} degrees at speed {speed}")
+    print(f"[UnitreeRobot] Rotating {angle} degrees")
     
     try:
         robot_controller.rotate(angle, speed)
